@@ -9,9 +9,12 @@ interface IToDoState {
   [key: string]: ITodo[];
 }
 
+const savedCategory = localStorage.getItem("categoryList");
 export const categoryListState = atom<string[]>({
-  key: "category",
-  default: ["To Do", "Doing", "Done", "trash"],
+  key: "categoryList",
+  default: savedCategory
+    ? JSON.parse(savedCategory)
+    : ["To Do", "Doing", "Done"],
 });
 
 const savedToDos = localStorage.getItem("toDos");

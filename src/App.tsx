@@ -8,27 +8,34 @@ import { useEffect } from "react";
 
 const Wrapper = styled.div`
   display: flex;
-  max-width: 680px;
   width: 100%;
-  margin: 0 auto;
+  margin: 30px auto;
   justify-content: center;
   align-items: center;
-  height: 30vh;
 `;
-const Boards = styled.div`
-  display: grid;
-  width: 100%;
+
+interface IBoardsProps {
+  isDraggingFromThis: boolean;
+  isDraggingOver: boolean;
+}
+
+const Boards = styled.div<IBoardsProps>`
+  display: flex;
   gap: 10px;
-  grid-template-columns: repeat(3, 1fr);
+  overflow-x: auto;
+  padding: 20px;
 `;
+
 const Form = styled.form`
   margin-top: 50px;
   margin-left: 50px;
+
   input {
     border: none;
     padding: 10px;
     border-radius: 10px;
   }
+
   button {
     padding: 8px;
     margin-left: 5px;
@@ -38,12 +45,12 @@ const Form = styled.form`
     color: ${(props) => props.theme.cardColor};
   }
 `;
+
 const Trash = styled.div`
   border: 1px dashed rgba(0, 0, 0, 0.3);
   height: 150px;
   width: 150px;
   background-color: transparent;
-
   position: relative;
   display: flex;
   flex-direction: column;
@@ -53,10 +60,12 @@ const Trash = styled.div`
   margin: 50px 0 0 50px;
   justify-content: flex-end;
   transition: backgrond-color 0.3s, transform 0.2s;
+
   &:hover {
     transform: scale(1.05);
   }
 `;
+
 const Title = styled.h2`
   font-weight: 700;
   font-size: 70px;
@@ -68,18 +77,20 @@ const Title = styled.h2`
   white-space: nowrap;
   pointer-events: none;
 `;
+
 interface IForm {
   category: string;
 }
+
 interface IAreaProps {
   isDraggingFromThis: boolean;
   isDraggingOver: boolean;
 }
+
 const Area = styled.div<IAreaProps>`
   padding: 20px;
   height: 120px;
   width: 120px;
-
   background-color: ${(props) =>
     props.isDraggingOver
       ? "#dfe6e9"
@@ -88,38 +99,52 @@ const Area = styled.div<IAreaProps>`
       : "transparent"};
   transition: 0.5s ease-in;
 `;
+
 function App() {
   const [toDos, setToDos] = useRecoilState(toDoState);
-  const setCategoryList = useSetRecoilState(categoryListState);
+  const [categoryList, setCategoryList] = useRecoilState(categoryListState);
   const { register, setValue, handleSubmit } = useForm<IForm>();
 
   const onValid = ({ category }: IForm) => {
     setCategoryList((allCategory) => {
       return [...allCategory, category];
     });
-
     console.log(category);
     setToDos((allBoards) => {
       return { ...allBoards, [category]: [] };
     });
     setValue("category", "");
   };
+
   useEffect(() => {
     localStorage.setItem("toDos", JSON.stringify(toDos));
-  }, [toDos]);
+    localStorage.setItem("categoryList", JSON.stringify(categoryList));
+  }, [toDos, categoryList]);
+
   const onDragEnd = (info: DropResult) => {
     console.log(info);
-    const { destination, source } = info;
+    const { destination, source, draggableId, type } = info;
     if (!destination) return;
-    if (destination?.droppableId === "trash") {
+    if (destination?.droppableId === "trash-board") {
+      setCategoryList((allBoards) =>
+        allBoards.filter((id) => id !== draggableId)
+      );
+      setToDos((allBoards) => {
+        const boardCopy = { ...allBoards };
+        delete boardCopy[draggableId];
+        return boardCopy;
+      });
+      return;
+    }
+    if (destination?.droppableId === "trash-card") {
       setToDos((allBoards) => {
         const boardCopy = [...allBoards[source.droppableId]];
         boardCopy.splice(source.index, 1);
         return { ...allBoards, [source.droppableId]: boardCopy };
       });
-      console.log(toDos);
       return;
     }
+
     if (destination?.droppableId === source.droppableId) {
       //same board movement.
       setToDos((allBoards) => {
@@ -129,7 +154,9 @@ function App() {
         boardCopy.splice(destination?.index, 0, taskObj);
         return { ...allBoards, [source.droppableId]: boardCopy };
       });
+      return;
     }
+
     if (destination?.droppableId !== source.droppableId) {
       setToDos((allBoards) => {
         const sourceBoard = [...allBoards[source.droppableId]];
@@ -145,7 +172,6 @@ function App() {
       });
     }
   };
-
   return (
     <>
       <Form onSubmit={handleSubmit(onValid)}>
@@ -158,26 +184,67 @@ function App() {
       </Form>
       <DragDropContext onDragEnd={onDragEnd}>
         <Trash>
-          <Droppable droppableId="trash">
+          <Title>🗑</Title>
+          <Droppable droppableId="trash-board" type="board">
             {(magic, snapshot) => (
               <Area
                 isDraggingOver={snapshot.isDraggingOver}
                 isDraggingFromThis={Boolean(snapshot.draggingFromThisWith)}
                 ref={magic.innerRef}
                 {...magic.droppableProps}
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  height: "100%",
+                }}
               >
-                <Title>🗑</Title>
+                {magic.placeholder}
+              </Area>
+            )}
+          </Droppable>
+          <Droppable droppableId="trash-card">
+            {(magic, snapshot) => (
+              <Area
+                isDraggingOver={snapshot.isDraggingOver}
+                isDraggingFromThis={Boolean(snapshot.draggingFromThisWith)}
+                ref={magic.innerRef}
+                {...magic.droppableProps}
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  height: "100%",
+                }}
+              >
                 {magic.placeholder}
               </Area>
             )}
           </Droppable>
         </Trash>
         <Wrapper>
-          <Boards>
-            {Object.keys(toDos).map((boardId) => (
-              <Board boardId={boardId} key={boardId} toDos={toDos[boardId]} />
-            ))}
-          </Boards>
+          <Droppable droppableId="boards" type="board" direction="horizontal">
+            {(magic, snapshot) => (
+              <Boards
+                isDraggingOver={snapshot.isDraggingOver}
+                isDraggingFromThis={Boolean(snapshot.draggingFromThisWith)}
+                ref={magic.innerRef}
+                {...magic.droppableProps}
+              >
+                {categoryList.map((boardId, index) => (
+                  <Board
+                    boardId={boardId}
+                    key={boardId}
+                    toDos={toDos[boardId]}
+                    index={index}
+                  />
+                ))}
+                {magic.placeholder}
+              </Boards>
+            )}
+          </Droppable>
         </Wrapper>
       </DragDropContext>
     </>
