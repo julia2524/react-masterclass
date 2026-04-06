@@ -144,7 +144,15 @@ function App() {
       });
       return;
     }
-
+    if (type === "board") {
+      setCategoryList((allBoards) => {
+        const boardCopy = [...allBoards];
+        boardCopy.splice(source.index, 1);
+        boardCopy.splice(destination?.index, 0, draggableId);
+        return boardCopy;
+      });
+      return;
+    }
     if (destination?.droppableId === source.droppableId) {
       //same board movement.
       setToDos((allBoards) => {
