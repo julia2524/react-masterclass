@@ -56,6 +56,21 @@ export interface ITvDetailResult extends IBaseDetailContents {
   first_air_date: string;
   name: string;
 }
+interface ISearch {
+  backdrop_path: string;
+  id: number;
+  name?: string;
+  title?: string;
+  overview: string;
+  poster_path: string;
+  media_type: string;
+  first_air_date?: string;
+  release_date?: string;
+}
+export interface ISearchDatas {
+  page: number;
+  results: ISearch[];
+}
 
 export async function getNowPlayingMovies() {
   const response = await fetch(
@@ -94,8 +109,14 @@ export async function getTopRatedTvs() {
   const response = await fetch(`${BASE_PATH}/tv/top_rated?api_key=${API_KEY}`);
   return response.json();
 }
-
 export async function getTvDetail(tvId: string) {
   const response = await fetch(`${BASE_PATH}/tv/${tvId}?api_key=${API_KEY}`);
+  return response.json();
+}
+
+export async function getSearchDatas(keyword: string) {
+  const response = await fetch(
+    `${BASE_PATH}/search/multi?api_key=${API_KEY}&query=${keyword}`
+  );
   return response.json();
 }
