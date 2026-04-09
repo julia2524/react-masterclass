@@ -6,7 +6,7 @@ import {
   getMovieDetail,
   IExtendsResult,
   IMoviesResult,
-  IMovieDetailResult,
+  IMoviesDetailResult,
 } from "../api";
 import styled from "styled-components";
 import { makeImagePath } from "../utils";
@@ -259,7 +259,7 @@ function Home() {
   //     ["movies", "topRated"],
   //     getTopRatedMovies
   //   );
-  const { data: movieDetail } = useQuery<IMovieDetailResult>(
+  const { data: movieDetail } = useQuery<IMoviesDetailResult>(
     ["movieDetail", bigMovieMatch?.params.movieId],
     () => getMovieDetail(bigMovieMatch!.params.movieId),
     { enabled: !!bigMovieMatch }
