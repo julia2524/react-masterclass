@@ -26,6 +26,20 @@ export interface IMoviesResult {
   total_results: number;
 }
 
+interface IGenres {
+  id: number;
+  name: string;
+}
+export interface IMovieDetailResult {
+  genres: IGenres[];
+  id: number;
+  release_date: string;
+  title: string;
+  overview: string;
+  backdrop_path: string;
+  adult: boolean;
+}
+
 export async function getNowPlayingMovies() {
   const response = await fetch(
     `${BASE_PATH}/movie/now_playing?api_key=${API_KEY}`
@@ -41,6 +55,13 @@ export async function getPopularMovies() {
 export async function getTopRatedMovies() {
   const response = await fetch(
     `${BASE_PATH}/movie/top_rated?api_key=${API_KEY}`
+  );
+  return response.json();
+}
+
+export async function getMovieDetail(movieId: string) {
+  const response = await fetch(
+    `${BASE_PATH}/movie/${movieId}?api_key=${API_KEY}`
   );
   return response.json();
 }

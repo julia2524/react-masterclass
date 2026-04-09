@@ -3,8 +3,10 @@ import {
   getNowPlayingMovies,
   getPopularMovies,
   getTopRatedMovies,
+  getMovieDetail,
   IExtendsResult,
   IMoviesResult,
+  IMovieDetailResult,
 } from "../api";
 import styled from "styled-components";
 import { makeImagePath } from "../utils";
@@ -104,17 +106,18 @@ const BigCover = styled.div`
   background-position: center center;
   height: 400px;
 `;
-const BigTitle = styled.h3`
+const BigTitle = styled.h3<{ isLong: boolean }>`
   color: ${(props) => props.theme.white.lighter};
   padding: 20px;
-  font-size: 46px;
+  font-size: ${(props) => (props.isLong ? "28px" : "46px")};
   position: relative;
   top: -80px;
+  height: 100px;
 `;
 const BigOverview = styled.p`
   padding: 20px;
   position: relative;
-  top: -80px;
+  top: -140px;
   color: ${(props) => props.theme.white.lighter};
 `;
 const Category = styled.h1`
@@ -133,6 +136,20 @@ const Button = styled.button`
   z-index: 10;
   color: ${(props) => props.theme.white.lighter};
 `;
+const BigMetaDatas = styled.ul`
+  padding: 20px;
+  position: relative;
+  top: -110px;
+  display: flex;
+`;
+const BigMetaData = styled.li`
+  background-color: ${(props) => props.theme.black.darker};
+  padding: 8px;
+  margin-right: 5px;
+  border-radius: 15px;
+  font-size: 13px;
+`;
+
 const rowVariants: Variants = {
   hidden: {
     x: window.outerWidth + 5,
@@ -237,6 +254,16 @@ function Home() {
   const clickedMovie =
     bigMovieMatch?.params.movieId &&
     allMovies.find((movie) => movie.id === +bigMovieMatch.params.movieId);
+
+  //       const topRatedData = useQuery<IExtendsResult>(
+  //     ["movies", "topRated"],
+  //     getTopRatedMovies
+  //   );
+  const { data: movieDetail } = useQuery<IMovieDetailResult>(
+    ["movieDetail", bigMovieMatch?.params.movieId],
+    () => getMovieDetail(bigMovieMatch!.params.movieId),
+    { enabled: !!bigMovieMatch }
+  );
 
   return (
     <Wrapper>
@@ -393,7 +420,20 @@ function Home() {
                           )})`,
                         }}
                       />
-                      <BigTitle>{clickedMovie.title}</BigTitle>
+                      <BigTitle isLong={clickedMovie.title.length > 15}>
+                        {clickedMovie.title}
+                      </BigTitle>
+                      <BigMetaDatas>
+                        <BigMetaData>
+                          {movieDetail?.release_date?.slice(0, 4)}
+                        </BigMetaData>
+                        <BigMetaData>
+                          {movieDetail?.adult ? "19+" : "15+"}
+                        </BigMetaData>
+                        {movieDetail?.genres.slice(0, 3).map((g) => (
+                          <BigMetaData> {g.name} </BigMetaData>
+                        ))}
+                      </BigMetaDatas>
                       <BigOverview>{clickedMovie.overview}</BigOverview>
                     </>
                   )}
